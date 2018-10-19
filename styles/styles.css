@@ -1,0 +1,68 @@
+body {
+	font-family
+}
+h1,p { color: #535353; }
+h1 { font-size: 22px; }
+p { font-size: 14px; }
+
+.buttons-container {
+	display: block;
+	margin: 0 auto;
+}
+
+.description {
+	padding-right: 10px;
+}
+
+button {
+	font-size: 14px;
+	height: 30px;
+	width: 70px;
+	background: #0bda50;
+	color: white;
+	border-radius: 5px;
+	margin-top: 10px;
+	margin-right: 5px;
+	border-width: 0;
+	cursor: pointer;
+}
+form {
+	padding-top: 20px;
+}
+input {
+	font-size: 14px;
+	width: 200px;
+	border-width: 1px;
+	margin-top: 10px;
+	margin-right: 5px;
+	border: none;
+	border-bottom: 1px solid #ccc;
+	padding-bottom: 5px;
+	-webkit-appearance: textfield;
+	box-sizing: border-box;
+
+}
+span + span {
+	margin-left: 10px;
+}
+.register-button {
+	color: red;
+}
+a#twine-link {
+	font-size: 14px;
+	color: #107bf2;
+	padding-bottom: 30px;
+}
+
+a#twine-link:hover {
+	color: #20f368;
+}
+
+hr {
+	margin-top: 15px;
+	margin-bottom: 10px;
+	border: none;
+	height: 1px;
+	color: #ccc ; /* old IE */
+	background-color: #ccc; /* Modern Browsers */
+}

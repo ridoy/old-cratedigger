@@ -1,0 +1,23 @@
+{
+  "name": "cratedigger",
+  "version": "1.0.0",
+  "description": "CrateDigger makes YouTube into the ultimate music sampling machine.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jakevollkommer/Rope.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jakevollkommer/Rope/issues"
+  },
+  "homepage": "https://github.com/jakevollkommer/Rope#readme",
+  "dependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1"
+  }
+}

@@ -1,0 +1,27 @@
+{
+	"manifest_version": 2,
+		"name": "CrateDigger",
+		"description": "Turn YouTube into the ultimate music sampling machine",
+		"version": "1",
+		"author": "Ridoy",
+		"browser_action": {
+			"default_popup": "html/popup.html"
+		},
+		"background": {
+			"page": "html/background.html",
+			"permissions": [
+				"tabs"
+				]
+		},
+		"content_scripts": [
+		{
+			"run_at": "document_idle",
+			"matches": ["*://*.youtube.com/*"],
+			"js": ["vendor/jquery-3.3.1.min.js", "vendor/arrive.min.js", "js/inject.js"],
+			"permissions": [
+				"tabs"
+				]
+		}
+	],
+		"permissions": ["activeTab", "storage", "tabs"]
+}
