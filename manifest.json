@@ -12,7 +12,7 @@
             "js/inject.js"
         ],
         "css": [
-            "styles/styles.css"
+            "css/styles.css"
         ]
     }],
     "permissions": [

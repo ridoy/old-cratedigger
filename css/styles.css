@@ -1,3 +1,14 @@
+#cd-dl-link {
+    font-size: 16px;
+}
+
+.cd-start-time, .cd-end-time {
+    font-size: 14px;
+    position: relative;
+    top: -20px;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
 .cd-handle-container {
     position: relative;
     margin-top: -30px;
