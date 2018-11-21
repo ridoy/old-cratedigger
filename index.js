@@ -13,6 +13,7 @@ const { spawn } = require( 'child_process' );
 	// Split it up somehow
 	// Save it in a predefined folder
 	//const url = req.params.url;
+/*
 const url = 'https://www.youtube.com/watch?v=V27bVCyYoOg&t=13s';
 const options = { format: 'mp3' };
 console.log(global);
@@ -35,5 +36,5 @@ ytdl(url, options)
 				console.log( `child process exited with code ${code}` );
 		} );
 	});
-//});
+*/
 

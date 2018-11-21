@@ -26,5 +26,8 @@
     "shell": "^0.5.0",
     "ytdl-core": "^0.26.3"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "eslint": "^5.9.0",
+    "eslint-plugin-compat": "^2.6.3"
+  }
 }

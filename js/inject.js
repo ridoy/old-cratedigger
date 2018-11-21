@@ -1,56 +1,134 @@
 console.log('Content script loaded.');
 
-var CrateDigger = function() {
+/*
+ * CrateDigger Module
+ *
+ * _______________________________
+ *|                               |
+ *|                               |
+ *|      { YouTube video }        |
+ *|                               |
+ *|                               |
+ *|      start          end       |
+ *|        |             |        |
+ *|============o------------------|
+ *| > ||                     * [ ]|
+ *
+ * "Download .mp3 from {start} to {end}"
+ *
+ */
+function CrateDigger() {
+
 }
 
 CrateDigger.prototype = {
+
+    /*
+     * Initialize everything by grabbing key elements from the YouTube page
+     * and injecting HTML elements for the user to interact with CrateDigger.
+     */
     init: function() {
         this.ytVideo = document.getElementsByTagName('video')[0];
+        this.ytProgressBar = 
+            document.getElementsByClassName('ytp-progress-bar-container')[0];
+        this.videoInfoBox = 
+            document.getElementsByTagName('ytd-video-primary-info-renderer')[0];
+
         this.injectDownloadLink();
         this.injectHandles();
     },
 
     /*
-     * Inject link for downloading .mp3 into the page.
+     * Inject a link into the page for downloading an mp3 of the selected part
+     * of the video.
      */
-	injectDownloadLink: function() {
-		let $this = this;
+    injectDownloadLink: function() {
+        let $this = this;
 
         // Build download link
         this.downloadLink = document.createElement('a');
         this.downloadLink.href = 'javascript:void(0)';
-        this.downloadLink.id = "cd-dl-link";
-        this.downloadLink.innerHTML = 'Download .mp3 from <span id="cd-dl-start">0:00</span> to <span id="cd-dl-end">0:00</span>';
-	    this.downloadLink.onclick = function(e) {
-			const url = window.location.href;
-			$this.saveYTAudio(url);
-		};
+        this.downloadLink.id = 'cd-dl-link';
+        this.downloadLink.innerHTML = 'Download .mp3 from '
+                                      + '<span id="cd-dl-start">0:00</span>'
+                                      + ' to <span id="cd-dl-end">0:00</span>';
+        this.downloadLink.onclick = function() {
+            const url = window.location.href;
+            // TODO define start end
+            $this.saveYTAudio(url, start, end);
+        };
 
         // Inject download link above video title
-        let videoRenderBox = document.getElementsByTagName('ytd-video-primary-info-renderer')[0];
-        videoRenderBox.before(this.downloadLink);
-	},
+        this.videoInfoBox.before(this.downloadLink);
+    },
 
     /*
-     * Inject start/end handles into the youtube video player.
+     * Inject start/end handles into the YouTube video player for the user to 
+     * define the region of the video they wish to download.
      */
-	injectHandles: function() {
+    injectHandles: function() {
         this.handleContainer = document.createElement('div');
         this.handleContainer.className = 'cd-handle-container';
-        let ytProgressBar = document.getElementsByClassName('ytp-progress-bar-container')[0];
-        ytProgressBar.append(this.handleContainer);
         this.leftHandle = this.buildHandle('cd-handle-left', 0, 'cd-dl-start');
         this.rightHandle = this.buildHandle('cd-handle-right', 30, 'cd-dl-end');
+
+        this.ytProgressBar.append(this.handleContainer);
         this.handleContainer.append(this.leftHandle.el);
         this.handleContainer.append(this.rightHandle.el);
+
         this.attachHandleListeners();
     },
 
     /*
-     * Constructor for a handle object.
-     * @param handleClass class of the handle element.
-     * @param startX default x position of handle element.
-     * @param timestampClass class of timestamp in download link.
+     * Attach listeners for movement of start/end handles.
+     */
+    attachHandleListeners: function() {
+        let $this = this;
+
+        // Update left handle position upon drag.
+        this.leftHandle.el.addEventListener('mousedown', function() {
+            document.onmousemove = function(e) {
+                if (e.offsetX < $this.rightHandle.x) {
+                    $this.leftHandle.updatePosition(e.offsetX);
+                }
+            };
+            document.onmouseup = function() {
+                document.onmousemove = null;
+                document.onmouseup = null;
+                let newTime = $this.xPosToSeconds($this.leftHandle.x);
+                $this.playVideo(newTime);
+            };
+        }, false);
+
+        // Update right handle position upon drag.
+        this.rightHandle.el.addEventListener('mousedown', function() {
+            document.onmousemove = function(e) {
+                if (e.offsetX > $this.leftHandle.x) {
+                    $this.rightHandle.updatePosition(e.offsetX);
+                }
+            };
+            document.onmouseup = function() {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        }, false);
+
+        // Negate default dragging behavior.
+        this.rightHandle.el.ondragstart = function() {
+            return false;
+        };
+        this.leftHandle.el.ondragstart = function() {
+            return false;
+        };
+    },
+
+    /*
+     * Constructor for a handle object. Usually we need 2 handles for the user
+     * to define the start and end of the video region they want to download.
+     *
+     * @param handleClass Class of the handle HTML element.
+     * @param startX Default x position of handle, relative to the progress bar.
+     * @param timestampClass Class of start/end timestamp in the download link.
      * @return handle The built handle object.
      */
     buildHandle: function(handleClass, startX, timestampClass) {
@@ -59,59 +137,40 @@ CrateDigger.prototype = {
             el: document.createElement('div'),
             x: startX,
             timeDisplay: document.createElement('span'),
-            timestampClass: timestampClass,
             updatePosition: function(x) {
                 this.x = x;
                 this.el.style.left = x + "px";
                 let timestamp = $this.xPosToTimestamp(x);
                 this.timeDisplay.innerText = timestamp;
-                document.getElementById(this.timestampClass).innerText = timestamp;
+                document.getElementById(timestampClass).innerText = timestamp;
             }
         };
-        handle.el.className = 'cd-handle ' + className;
+
+        handle.el.className = 'cd-handle ' + handleClass;
         handle.timeDisplay.className = 'cd-start-time';
         handle.timeDisplay.innerText = this.xPosToTimestamp(startX);
         handle.el.append(handle.timeDisplay);
+
         return handle;
     },
 
     /*
-     * Attach listeners for movement of start/end handles.
+     * Download the specified region of a YouTube video's audio.
+     *
+     * In the future we want to do this all in the browser, but this involves
+     * developing a CORS workaround. For now we're using a proxy.
+     *
+     * @param url The url of the YouTube video.
+     * @param start The region's start time in seconds.
+     * @param start The region's end time in seconds.
      */
-    attachHandleListeners: function() {
-        let $this = this;
-        this.leftHandle.el.addEventListener('mousedown', function(e) {
-            // Update handle's x position as mouse is dragged
-            document.onmousemove = function(e) {
-                if (e.offsetX < $this.rightHandle.x) {
-                    $this.leftHandle.updatePosition(e.offsetX);
-                }
-            };
-            document.onmouseup = function(e) {
-                document.onmousemove = null;
-                document.onmouseup = null;
-                $this.playVideo($this.xPosToSeconds(leftHandleX));
-            };
-        }, false);
-        this.rightHandle.el.addEventListener('mousedown', function(e) {
-            // Update handle's x position as mouse is dragged
-            document.onmousemove = function(e) {
-                if (e.offsetX > $this.leftHandle.x) {
-                    $this.rightHandle.updatePosition(e.offsetX);
-                }
-            };
-            document.onmouseup = function(e) {
-                document.onmousemove = null;
-                document.onmouseup = null;
-            };
-        }, false);
-        this.rightHandle.el.ondragstart = this.leftHandle.el.ondragstart = function() {
-            return false;
-        };
-	},
+    saveYTAudio: function(url, start, end) {
+        // Initiate download
+    },
 
     /*
-     * Seek video to time and play (if not playing already).
+     * Seek video to a specified time and if not paused play video.
+     *
      * @param newTime Time to seek in seconds.
      */
     playVideo: function(newTime) {
@@ -123,32 +182,43 @@ CrateDigger.prototype = {
 
     /*
      * Convert a position on the YT progress bar to seconds.
+     *
      * @param x An x position relative to the YT progress bar.
      * @return time in seconds.
      */
     xPosToSeconds: function(x) {
         let duration = this.ytVideo.duration;
-        let width = document.getElementsByClassName('ytp-progress-bar')[0].offsetWidth;
+        let width = this.ytProgressBar.offsetWidth;
         let ratio = x / width;
         return ratio * duration;
     },
 
     /*
      * Convert a position on the YT progress bar to a MM:SS timestamp.
+     *
      * @param x An x position relative to the YT progress bar.
      * @return time as MM:SS.
      */
     xPosToTimestamp: function(x) {
-        let seconds = xPosToSeconds(x);
-        return Math.floor(seconds / 60) + ':' + ((seconds % 60 < 10) ? '0' : '') + Math.floor(seconds % 60);
+        let seconds = this.xPosToSeconds(x);
+        let mm = Math.floor(seconds / 60);
+        let ss = ((seconds % 60 < 10) ? '0' : '') + Math.floor(seconds % 60)
+        return mm + ':' + ss;
     }
 }
 
 /*
- * Video info contents arrive sometime after the page loads, so wait for arrival before initializing CrateDigger.
+ * Video info contents arrive sometime after the page loads, so wait for 
+ * arrival before initializing CrateDigger.
  */
-$(document).arrive('ytd-video-primary-info-renderer', function() {
-    const crateDigger = new CrateDigger();
-    crateDigger.init();
-});
+const arriveOpts = {
+    once: true
+};
+
+$(document).arrive('ytd-video-primary-info-renderer', 
+    arriveOpts, 
+    function initCrateDigger() {
+        const crateDigger = new CrateDigger();
+        crateDigger.init();
+    });
 

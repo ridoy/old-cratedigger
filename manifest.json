@@ -4,6 +4,9 @@
     "description": "Turn YouTube into the ultimate music sampling machine",
     "version": "1",
     "author": "Ridoy",
+    "browser_action": {
+        "default_popup": "html/popup.html"
+    },
     "content_scripts": [{
         "matches": ["*://*.youtube.com/*"],
         "js": [
@@ -18,6 +21,7 @@
     "permissions": [
         "https://*/*",
         "http://*/*",
+        "downloads",
         "activeTab", "storage", "tabs"
     ]
 }
