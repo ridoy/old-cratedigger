@@ -1,18 +1,20 @@
 console.log('Content script loaded.');
 
 /*
- * CrateDigger Module
+ * CrateDigger Object
  *
- * _______________________________
- *|                               |
- *|                               |
- *|      { YouTube video }        |
- *|                               |
- *|                               |
- *|      start          end       |
- *|        |             |        |
- *|============o------------------|
- *| > ||                     * [ ]|
+ * Modify the YouTube UI to look something like this so that we can clip (dig)
+ * parts of songs on YouTube (be it drum breaks, samples, etc.) and use them 
+ * in beats:
+ *  _______________________________
+ * |                               |
+ * |                               |
+ * |      { YouTube video }        |
+ * |                               |
+ * |      start          end       |
+ * |        |             |        |
+ * |============o------------------|
+ * | > ||                     * [ ]|
  *
  * "Download .mp3 from {start} to {end}"
  *
@@ -50,12 +52,14 @@ CrateDigger.prototype = {
         this.downloadLink.href = 'javascript:void(0)';
         this.downloadLink.id = 'cd-dl-link';
         this.downloadLink.innerHTML = 'Download .mp3 from '
-                                      + '<span id="cd-dl-start">0:00</span>'
-                                      + ' to <span id="cd-dl-end">0:00</span>';
+            + '<span id="cd-dl-start">0:00</span>'
+            + ' to <span id="cd-dl-end">0:00</span>';
         this.downloadLink.onclick = function() {
-            const url = window.location.href;
-            // TODO define start end
-            $this.saveYTAudio(url, start, end);
+            const queryParams = window.location.search.split('&');
+            const videoId = queryParams[0].split('=')[1];
+            const start = $this.xPosToSeconds($this.leftHandle.x)
+            const end = $this.xPosToSeconds($this.rightHandle.x)
+            $this.saveYTAudio(videoId, start, end);
         };
 
         // Inject download link above video title
@@ -164,8 +168,18 @@ CrateDigger.prototype = {
      * @param start The region's start time in seconds.
      * @param start The region's end time in seconds.
      */
-    saveYTAudio: function(url, start, end) {
+    saveYTAudio: function(videoId, start, end) {
+        const url = 'http://localhost:3000/dig/' + videoId + '/' + start + '/' + end;
         // Initiate download
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                console.log(xhttp.responseText);
+                window.location = xhttp.responseText;
+            }
+        };
+        xhttp.open("GET", url, true);
+        xhttp.send();
     },
 
     /*
@@ -202,7 +216,7 @@ CrateDigger.prototype = {
     xPosToTimestamp: function(x) {
         let seconds = this.xPosToSeconds(x);
         let mm = Math.floor(seconds / 60);
-        let ss = ((seconds % 60 < 10) ? '0' : '') + Math.floor(seconds % 60)
+        let ss = ((seconds % 60 < 10) ? '0' : '') + Math.floor(seconds % 60);
         return mm + ':' + ss;
     }
 }
@@ -211,12 +225,8 @@ CrateDigger.prototype = {
  * Video info contents arrive sometime after the page loads, so wait for 
  * arrival before initializing CrateDigger.
  */
-const arriveOpts = {
-    once: true
-};
-
 $(document).arrive('ytd-video-primary-info-renderer', 
-    arriveOpts, 
+    { once: true },
     function initCrateDigger() {
         const crateDigger = new CrateDigger();
         crateDigger.init();

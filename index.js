@@ -1,40 +1,76 @@
 'use strict';
 
+/*
+ * Imports
+ */
 const express = require('express');
 const app = express();
-const shell = require('shell');
 const ytdl = require('ytdl-core');
 const fs = require('fs');
 const ffmpeg = require('ffmpeg');
-const { spawn } = require( 'child_process' );
+const uuid = require('uuid');
 
-//app.get('/:url/:start/:end', (req, res, next) => {
-	// Get youtube mp3 somehow
-	// Split it up somehow
-	// Save it in a predefined folder
-	//const url = req.params.url;
 /*
-const url = 'https://www.youtube.com/watch?v=V27bVCyYoOg&t=13s';
-const options = { format: 'mp3' };
-console.log(global);
-ytdl(url, options)
-	.pipe(fs.createWriteStream('video'))
-	.on('finish', () => { 
-		var ls = spawn( 'ffmpeg', ['-i', 'video', '-vn', '-ab', '128k', '-ar', '44100', '-y', 'video.mp3'] );
+ * GET /dig/:url/:start/:end
+ *
+ * Extract audio from the YouTube video at :url from the region defined by :start to :end.
+ * Return url for downloading the output audio.
+ */
+app.get('/dig/:url/:start/:end', (req, res, next) => {
+    const url = 'https://www.youtube.com/watch?v=' + req.params.url;
+    const start = Math.floor(req.params.start);
+    const duration = Math.ceil(req.params.end) - start;
+    const id = uuid.v1();
+    const outputDir = 'out/'
+    const ytdlOptions = { format: 'mp3' };
 
-		ls.stdout.on( 'data', data => {
-				console.log( `stdout: ${data}` );
-		} );
+    /*
+     * 1. Download video.
+     */
+    ytdl(url, ytdlOptions)
+        .pipe(fs.createWriteStream(outputDir + id))
+        .on('finish', () => { 
+            /*
+             * 2. Convert audio stream from m4a to mp3.
+             */
+            new ffmpeg(outputDir + id)
+                .then((video) => {
+                    return video.setDisableVideo()
+                             .save(outputDir + id + '.mp3');
+                })
+                .then((filename) => {
+                    return new ffmpeg(filename);
+                })
 
-		ls.stderr.on( 'data', data => {
-				console.log( `stderr: ${data}` );
-				var splice = spawn( 'ffmpeg', [ '-i', 'video.mp3', '-acodec', 'copy', '-ss', '0:00:00', '-t', '2:00:00', 'out.mp3' ] );
+                /*
+                 * 3. Extract desired clip from mp3.
+                 */
+                .then((video) => {
+                    return video.setVideoStartTime(start)
+                             .setVideoDuration(duration)
+                             .save(outputDir + id + '-clip.mp3');
+                })
 
-		} );
+                /*
+                 * 4. Open download link for user.
+                 */
+                .then((filename) => {
+                    return res.send('http://localhost:3000/' + filename);
+                })
+                .catch((err) => {
+                    return res.status(500).send(err);
+                });
+        });
+});
 
-		ls.on( 'close', code => {
-				console.log( `child process exited with code ${code}` );
-		} );
-	});
-*/
+/*
+ * GET /out/:file
+ *
+ * Download output file after clipping/conversion process. 
+ */
+app.get('/out/:file', (req, res, next) => {
+    return res.sendFile(__dirname + '/out/' + req.params.file);
+});
 
+app.listen(3000);
+console.log('listening on 3000');
