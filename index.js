@@ -11,6 +11,12 @@ const ffmpeg = require('ffmpeg');
 const uuid = require('uuid');
 
 /*
+ * Constants
+ */
+const version = '0.1';
+const serverUrl = 'http://104.248.47.138:3000';
+
+/*
  * GET /dig/:url/:start/:end
  *
  * Extract audio from the YouTube video at :url from the region defined by :start to :end.
@@ -55,7 +61,7 @@ app.get('/dig/:url/:start/:end', (req, res, next) => {
                  * 4. Open download link for user.
                  */
                 .then((filename) => {
-                    return res.send('http://localhost:3000/' + filename);
+                    return res.send(serverUrl + '/' + filename);
                 })
                 .catch((err) => {
                     return res.status(500).send(err);
@@ -70,6 +76,15 @@ app.get('/dig/:url/:start/:end', (req, res, next) => {
  */
 app.get('/out/:file', (req, res, next) => {
     return res.sendFile(__dirname + '/out/' + req.params.file);
+});
+
+/*
+ * GET /version
+ *
+ * Return the current release of CrateDigger.
+ */
+app.get('/version', (req, res, next) => {
+    return res.send(version);
 });
 
 app.listen(3000);

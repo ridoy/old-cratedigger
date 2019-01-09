@@ -30,6 +30,8 @@ CrateDigger.prototype = {
      * and injecting HTML elements for the user to interact with CrateDigger.
      */
     init: function() {
+        this.serverUrl = 'http://104.248.47.138:3000';
+        this.version = '0.2';
         this.ytVideo = document.getElementsByTagName('video')[0];
         this.ytProgressBar = 
             document.getElementsByClassName('ytp-progress-bar-container')[0];
@@ -38,6 +40,24 @@ CrateDigger.prototype = {
 
         this.injectDownloadLink();
         this.injectHandles();
+        this.checkForUpdate();
+    },
+
+    checkForUpdate: function() {
+        const $this = this;
+        const xhttp = new XMLHttpRequest();
+        const url = this.serverUrl + '/version';
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                const latestVersion = xhttp.responseText;
+                if ($this.version !== latestVersion) {
+                    console.log('There is an updated CrateDigger available!');
+                }
+            }
+        };
+        xhttp.open('GET', url, true);
+        xhttp.send();
+
     },
 
     /*
@@ -92,8 +112,12 @@ CrateDigger.prototype = {
         // Update left handle position upon drag.
         this.leftHandle.el.addEventListener('mousedown', function() {
             document.onmousemove = function(e) {
-                if (e.offsetX < $this.rightHandle.x) {
-                    $this.leftHandle.updatePosition(e.offsetX);
+                const ytpBarX = $this.ytProgressBar.getBoundingClientRect().x;
+                const handleX = e.clientX - ytpBarX;
+                const isBehindRightHandle = (handleX < $this.rightHandle.x);
+                const isWithinProgressBar = (handleX >= 0);
+                if (isBehindRightHandle && isWithinProgressBar) {
+                    $this.leftHandle.updatePosition(handleX);
                 }
             };
             document.onmouseup = function() {
@@ -107,9 +131,14 @@ CrateDigger.prototype = {
         // Update right handle position upon drag.
         this.rightHandle.el.addEventListener('mousedown', function() {
             document.onmousemove = function(e) {
-                if (e.offsetX > $this.leftHandle.x) {
-                    $this.rightHandle.updatePosition(e.offsetX);
+                const ytpBarX = $this.ytProgressBar.getBoundingClientRect().x;
+                const handleX = e.clientX - ytpBarX;
+                const isAheadOfLeftHandle = (handleX > $this.leftHandle.x);
+                const isWithinProgressBar = (handleX <= $this.ytProgressBar.clientWidth);
+                if (isAheadOfLeftHandle && isWithinProgressBar) {
+                    $this.rightHandle.updatePosition(handleX);
                 }
+                
             };
             document.onmouseup = function() {
                 document.onmousemove = null;
@@ -150,6 +179,7 @@ CrateDigger.prototype = {
             }
         };
 
+        document.getElementById(timestampClass).innerText = this.xPosToTimestamp(startX);
         handle.el.className = 'cd-handle ' + handleClass;
         handle.timeDisplay.className = 'cd-start-time';
         handle.timeDisplay.innerText = this.xPosToTimestamp(startX);
@@ -169,9 +199,11 @@ CrateDigger.prototype = {
      * @param start The region's end time in seconds.
      */
     saveYTAudio: function(videoId, start, end) {
-        const url = 'http://localhost:3000/dig/' + videoId + '/' + start + '/' + end;
+        const url = this.serverUrl + '/dig/' + videoId 
+                                    + '/' + start 
+                                    + '/' + end;
         // Initiate download
-        var xhttp = new XMLHttpRequest();
+        const xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 console.log(xhttp.responseText);
@@ -180,6 +212,7 @@ CrateDigger.prototype = {
         };
         xhttp.open("GET", url, true);
         xhttp.send();
+        this.downloadLink.innerHTML = 'Processing video, please wait...';
     },
 
     /*
