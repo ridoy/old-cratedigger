@@ -9,12 +9,31 @@ const ytdl = require('ytdl-core');
 const fs = require('fs');
 const ffmpeg = require('ffmpeg');
 const uuid = require('uuid');
+const http = require('http');
+const https = require('https');
 
 /*
  * Constants
  */
 const version = '0.1';
-const serverUrl = 'http://104.248.47.138:3000';
+const serverUrl = 'https://cratedigger.me';
+app.use(express.static(__dirname, { dotfiles: 'allow' } ));
+
+const privateKey = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/privkey.pem', 'utf8');
+const certificate = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/cert.pem', 'utf8');
+const ca = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/chain.pem', 'utf8');
+const options = {
+	key: privateKey,
+	cert: certificate,
+	ca: ca
+};
+
+const debugMode = true;
+
+function debug(message) {
+    if (debugMode) console.log(message);
+}
+
 
 /*
  * GET /dig/:url/:start/:end
@@ -30,6 +49,8 @@ app.get('/dig/:url/:start/:end', (req, res, next) => {
     const outputDir = 'out/'
     const ytdlOptions = { format: 'mp3' };
 
+
+    debug('Downloading video');
     /*
      * 1. Download video.
      */
@@ -39,6 +60,7 @@ app.get('/dig/:url/:start/:end', (req, res, next) => {
             /*
              * 2. Convert audio stream from m4a to mp3.
              */
+            debug('Converting m4a to mp3');
             new ffmpeg(outputDir + id)
                 .then((video) => {
                     return video.setDisableVideo()
@@ -52,6 +74,7 @@ app.get('/dig/:url/:start/:end', (req, res, next) => {
                  * 3. Extract desired clip from mp3.
                  */
                 .then((video) => {
+                    debug('Extracting clip');
                     return video.setVideoStartTime(start)
                              .setVideoDuration(duration)
                              .save(outputDir + id + '-clip.mp3');
@@ -64,6 +87,7 @@ app.get('/dig/:url/:start/:end', (req, res, next) => {
                     return res.send(serverUrl + '/' + filename);
                 })
                 .catch((err) => {
+                    debug(err);
                     return res.status(500).send(err);
                 });
         });
@@ -87,5 +111,10 @@ app.get('/version', (req, res, next) => {
     return res.send(version);
 });
 
-app.listen(3000);
-console.log('listening on 3000');
+// Create an HTTP service.
+var httpServer = http.createServer(app);
+// Create an HTTPS service identical to the HTTP service.
+var httpsServer = https.createServer(options, app);
+httpServer.listen(80);
+httpsServer.listen(443);
+console.log('listening on ports 80 and 443');
