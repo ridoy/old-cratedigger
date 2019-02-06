@@ -30,8 +30,8 @@ CrateDigger.prototype = {
      * and injecting HTML elements for the user to interact with CrateDigger.
      */
     init: function() {
-        this.serverUrl = 'http://104.248.47.138:3000';
-        this.version = '0.2';
+        this.serverUrl = 'https://cratedigger.me';
+        this.version = '0.1';
         this.ytVideo = document.getElementsByTagName('video')[0];
         this.ytProgressBar = 
             document.getElementsByClassName('ytp-progress-bar-container')[0];
