@@ -4,7 +4,7 @@ CrateDigger makes YouTube into the ultimate music sampling machine. It is a Goog
 
 ![CrateDigger demo](https://ridoy.github.io/cratedigger/img/cratedigdemo.gif)
 
-### Setup
+## Setup
 
 Manual setup is an easy 3 step process:
 
@@ -14,5 +14,7 @@ Manual setup is an easy 3 step process:
 
 ## Release Notes
 > ## v0.1
-> #### New features:
+> #### New feature(s):
 > - Download audio clips directly from the YouTube player
+> #### Known bug(s):
+> - Download link doesnt appear after navigating to a suggested video
