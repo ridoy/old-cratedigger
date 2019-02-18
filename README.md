@@ -3,6 +3,7 @@
 CrateDigger makes YouTube into the ultimate music sampling machine. It is a Google Chrome extension available for manual installation.
 
 Video demo:
+
 [![](http://img.youtube.com/vi/2mTcCP7Jm7Q/0.jpg)](http://www.youtube.com/watch?v=2mTcCP7Jm7Q "CrateDigger demo")
 
 ## Setup
