@@ -119,6 +119,7 @@ app.get('/version', (req, res, next) => {
 var httpServer = http.createServer(app);
 // Create an HTTPS service identical to the HTTP service.
 //var httpsServer = https.createServer(options, app);
-httpServer.listen(80);
+console.log(`Listening on ${process.env.PORT}`);
+httpServer.listen(process.env.PORT);
 //httpsServer.listen(443);
 console.log('listening on ports 80 and 443');
