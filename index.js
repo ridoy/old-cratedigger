@@ -36,6 +36,8 @@ function debug(message) {
     if (debugMode) console.log(message);
 }
 
+console.log('Running');
+
 
 /*
  * GET /dig/:url/:start/:end
