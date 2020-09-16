@@ -16,9 +16,10 @@ const https = require('https');
  * Constants
  */
 const version = '0.1';
-const serverUrl = 'https://cratedigger.me';
+const serverUrl = 'https://cratedigger-server.herokuapp.com';
 app.use(express.static(__dirname, { dotfiles: 'allow' } ));
 
+/*
 const privateKey = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/privkey.pem', 'utf8');
 const certificate = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/cert.pem', 'utf8');
 const ca = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/chain.pem', 'utf8');
@@ -27,6 +28,7 @@ const options = {
 	cert: certificate,
 	ca: ca
 };
+*/
 
 const debugMode = true;
 
@@ -114,7 +116,7 @@ app.get('/version', (req, res, next) => {
 // Create an HTTP service.
 var httpServer = http.createServer(app);
 // Create an HTTPS service identical to the HTTP service.
-var httpsServer = https.createServer(options, app);
+//var httpsServer = https.createServer(options, app);
 httpServer.listen(80);
-httpsServer.listen(443);
+//httpsServer.listen(443);
 console.log('listening on ports 80 and 443');

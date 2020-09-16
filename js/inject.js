@@ -30,7 +30,7 @@ CrateDigger.prototype = {
      * and injecting HTML elements for the user to interact with CrateDigger.
      */
     init: function() {
-        this.serverUrl = 'https://cratedigger.me';
+        this.serverUrl = 'https://cratedigger-server.herokuapp.com';
         this.version = '0.1';
         this.ytVideo = document.getElementsByTagName('video')[0];
         this.ytProgressBar = 
