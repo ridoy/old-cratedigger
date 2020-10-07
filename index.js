@@ -16,10 +16,9 @@ const https = require('https');
  * Constants
  */
 const version = '0.1';
-const serverUrl = 'https://cratedigger-server.herokuapp.com';
+const serverUrl = 'https://cratedigger.me';
 app.use(express.static(__dirname, { dotfiles: 'allow' } ));
 
-/*
 const privateKey = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/privkey.pem', 'utf8');
 const certificate = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/cert.pem', 'utf8');
 const ca = fs.readFileSync('/etc/letsencrypt/live/cratedigger.me/chain.pem', 'utf8');
@@ -28,15 +27,12 @@ const options = {
 	cert: certificate,
 	ca: ca
 };
-*/
 
 const debugMode = true;
 
 function debug(message) {
     if (debugMode) console.log(message);
 }
-
-console.log('Running');
 
 
 /*
@@ -52,8 +48,6 @@ app.get('/dig/:url/:start/:end', (req, res, next) => {
     const id = uuid.v1();
     const outputDir = 'out/'
     const ytdlOptions = { format: 'mp3' };
-    res.header("Access-Control-Allow-Origin", "*"); // update to match the domain you will make the request from
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 
 
     debug('Downloading video');
@@ -120,8 +114,7 @@ app.get('/version', (req, res, next) => {
 // Create an HTTP service.
 var httpServer = http.createServer(app);
 // Create an HTTPS service identical to the HTTP service.
-//var httpsServer = https.createServer(options, app);
-console.log(`Listening on ${process.env.PORT}`);
-httpServer.listen(process.env.PORT);
-//httpsServer.listen(443);
+var httpsServer = https.createServer(options, app);
+httpServer.listen(80);
+httpsServer.listen(443);
 console.log('listening on ports 80 and 443');
